@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Re10Xion — Customer Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- No external SDK needed — Supabase REST API called directly -->
+
+  <style>
+    :root {
+      --bg-deep:       #0c0b09;
+      --bg-surface:    #111009;
+      --bg-elevated:   #181610;
+      --bg-card:       #161410;
+      --bg-card-alt:   #1c1a14;
+      --border:        rgba(201,169,98,0.14);
+      --border-strong: rgba(201,169,98,0.28);
+      --text-primary:  #f0ebe0;
+      --text-secondary:rgba(240,235,224,0.58);
+      --text-muted:    rgba(240,235,224,0.34);
+      --text-label:    rgba(240,235,224,0.42);
+      --gold:          #c9a55a;
+      --gold-light:    #dfc070;
+      --gold-dim:      rgba(201,165,90,0.10);
+      --danger:        #c45050;
+      --danger-dim:    rgba(196,80,80,0.14);
+      --warning:       #b8922e;
+      --warning-dim:   rgba(184,146,46,0.14);
+      --success:       #5a9e6a;
+      --success-dim:   rgba(90,158,106,0.14);
+      --neutral:       #7a7570;
+      --radius:        10px;
+      --radius-lg:     14px;
+      --shadow:        0 20px 56px rgba(0,0,0,0.6);
+      --font-display:  'Cormorant Garamond', Georgia, serif;
+      --font-body:     'Inter', system-ui, sans-serif;
+      --nav-width:     230px;
+      --transition:    0.20s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ════════════════════════════════
+       AUTH SCREEN
+    ════════════════════════════════ */
+    #authScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg-deep);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      padding: 48px 44px;
+      width: 100%; max-width: 420px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 48px 96px rgba(0,0,0,0.75);
+    }
+
+    .auth-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+      opacity: 0.5;
+    }
+
+    .auth-logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .auth-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      border: 1px solid var(--border-strong);
+      background: var(--gold-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 700; color: var(--gold);
+    }
+
+    .auth-brand {
+      font-family: var(--font-display);
+      font-size: 26px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .auth-brand span { color: var(--gold); }
+
+    .auth-tabs {
+      display: flex; gap: 0;
+      margin-bottom: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+
+    .auth-tab {
+      flex: 1; padding: 10px;
+      background: transparent; border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all var(--transition);
+      text-align: center;
+    }
+
+    .auth-tab.active {
+      background: var(--gold-dim);
+      color: var(--gold-light);
+    }
+
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .auth-form input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 14px; padding: 13px 15px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .auth-form input:focus {
+      border-color: var(--border-strong);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+
+    .auth-form input::placeholder { color: var(--text-muted); }
+
+    .btn-auth {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--gold) 0%, #9a7830 100%);
+      color: #0a0800; border: none; border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600; letter-spacing: 0.04em;
+      cursor: pointer; transition: all var(--transition);
+      margin-top: 4px;
+    }
+
+    .btn-auth:hover {
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(201,165,90,0.28);
+    }
+
+    .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .auth-error {
+      font-size: 13px; color: var(--danger);
+      background: var(--danger-dim);
+      border: 1px solid rgba(196,80,80,0.25);
+      border-radius: var(--radius); padding: 10px 14px;
+      display: none;
+    }
+
+    .auth-error.show { display: block; }
+
+    .auth-footnote {
+      text-align: center; margin-top: 20px;
+      font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em;
+    }
+
+    /* ════════════════════════════════
+       ONBOARDING (business setup)
+    ════════════════════════════════ */
+    #onboardingOverlay {
+      position: fixed; inset: 0; z-index: 8888;
+      background: var(--bg-deep);
+      display: none;
+      align-items: center; justify-content: center; padding: 24px;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    #onboardingOverlay.visible { display: flex; }
+    #onboardingOverlay.fade-out { opacity: 0; transform: translateY(-14px); pointer-events: none; }
+
+    .onboarding-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 20px; padding: 48px 44px;
+      width: 100%; max-width: 440px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 48px 96px rgba(0,0,0,0.75);
+    }
+
+    .onboarding-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+      opacity: 0.5;
+    }
+
+    .onboarding-card h2 {
+      font-family: var(--font-display);
+      font-size: 30px; font-weight: 600; line-height: 1.22;
+      margin-bottom: 28px;
+    }
+    .onboarding-card h2 em { font-style: italic; color: var(--gold); }
+
+    .ob-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .ob-form label {
+      display: block; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 6px;
+    }
+
+    .ob-form input {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 14px; padding: 13px 15px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .ob-form input:focus {
+      border-color: var(--border-strong);
+      box-shadow: 0 0 0 3px var(--gold-dim);
+    }
+
+    .ob-form input::placeholder { color: var(--text-muted); }
+
+    .btn-onboard {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--gold) 0%, #9a7830 100%);
+      color: #0a0800; border: none; border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; cursor: pointer;
+      transition: all var(--transition); margin-top: 4px;
+    }
+
+    .btn-onboard:hover {
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(201,165,90,0.30);
+    }
+
+    /* ════════════════════════════════
+       APP SHELL
+    ════════════════════════════════ */
+    .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--nav-width);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 100; transition: transform var(--transition);
+    }
+
+    .brand { padding: 28px 22px 24px; border-bottom: 1px solid var(--border); }
+    .brand-mark { display: flex; align-items: center; gap: 11px; }
+
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid var(--border-strong); background: var(--gold-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--gold);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-primary);
+    }
+    .brand-name span { color: var(--gold); }
+    .brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; letter-spacing: 0.04em; }
+
+    .nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+
+    .nav-section-label {
+      font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted); padding: 12px 10px 5px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: var(--radius);
+      cursor: pointer; border: none; background: transparent;
+      color: var(--text-secondary); font-family: var(--font-body);
+      font-size: 13.5px; font-weight: 400; text-align: left; width: 100%;
+      transition: all var(--transition);
+    }
+
+    .nav-item:hover { background: var(--gold-dim); color: var(--text-primary); }
+    .nav-item.active { background: rgba(201,165,90,0.08); color: var(--text-primary); border: 1px solid var(--border); }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.65; }
+    .nav-item.active svg { opacity: 1; color: var(--gold); }
+
+    .nav-sub-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 14px 7px 40px; border-radius: var(--radius);
+      cursor: pointer; border: none; background: transparent;
+      color: var(--text-muted); font-family: var(--font-body); font-size: 13px;
+      text-align: left; width: 100%; transition: all var(--transition);
+    }
+
+    .nav-sub-item:hover { background: var(--gold-dim); color: var(--text-secondary); }
+    .nav-sub-item.active { color: var(--gold-light); background: var(--gold-dim); }
+    .nav-sub-item svg { width: 12px; height: 12px; flex-shrink: 0; opacity: 0.4; }
+
+    .sidebar-footer { padding: 16px 12px 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+
+    .user-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 12px; border-radius: var(--radius);
+      background: var(--bg-elevated); border: 1px solid var(--border);
+    }
+
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold-dim); border: 1px solid var(--border-strong);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .user-email { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .btn-logout {
+      width: 100%; padding: 8px 12px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text-muted);
+      font-family: var(--font-body); font-size: 12px;
+      cursor: pointer; transition: all var(--transition); text-align: center;
+    }
+
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-dim); }
+
+    /* ── Main ── */
+    .main { flex: 1; margin-left: var(--nav-width); min-height: 100vh; }
+
+    .screen { display: none; padding: 36px 44px 56px; animation: fadeIn 0.30s ease; }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Loading spinner full screen ── */
+    #appLoader {
+      position: fixed; inset: 0; z-index: 7777;
+      background: var(--bg-deep);
+      display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+    }
+
+    #appLoader.hidden { display: none; }
+
+    /* ── Dashboard ── */
+    .dash-date { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+
+    #dashGreeting {
+      font-family: var(--font-display); font-size: 26px; font-weight: 600;
+      letter-spacing: -0.005em; line-height: 1.3; margin-bottom: 24px;
+      color: var(--text-secondary);
+    }
+
+    #dashGreeting span { color: var(--gold); }
+
+    .screen-header { margin-bottom: 32px; }
+    .screen-header h1 { font-family: var(--font-display); font-size: 40px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 7px; }
+    .screen-header p { color: var(--text-secondary); font-size: 14px; max-width: 540px; }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 16px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px 24px 20px; }
+    .kpi-label { font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-label); margin-bottom: 12px; }
+    .kpi-value { font-family: var(--font-display); font-size: 52px; font-weight: 600; line-height: 1; color: var(--text-primary); }
+    .kpi-value.gold   { color: var(--gold); }
+    .kpi-value.danger { color: var(--danger); }
+    .kpi-sub { font-size: 12px; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+    .kpi-sub.up   { color: var(--success); }
+    .kpi-sub.warn { color: var(--danger); }
+    .kpi-sub.mute { color: var(--text-muted); }
+    .kpi-sub svg  { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px 24px; position: relative; }
+
+    .card-title { font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-label); margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; }
+
+    /* Sentiment rows */
+    .sentiment-rows { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+    .sentiment-row { display: flex; align-items: center; gap: 12px; }
+    .sentiment-row-label { font-size: 13px; color: var(--text-secondary); width: 62px; flex-shrink: 0; }
+    .sentiment-row-bar-wrap { flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+    .sentiment-row-bar { height: 100%; border-radius: 99px; transition: width 0.7s ease; }
+    .sbar-positive { background: var(--success); }
+    .sbar-neutral  { background: var(--warning); }
+    .sbar-negative { background: var(--danger); }
+    .sentiment-row-pct { font-size: 13px; color: var(--text-secondary); width: 34px; text-align: right; flex-shrink: 0; }
+
+    /* Priority action */
+    .priority-action-card { background: var(--bg-card-alt); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-top: 18px; }
+    .priority-action-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .priority-action-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+    .priority-action-text strong { color: var(--text-primary); font-weight: 500; }
+
+    /* Customer rows */
+    .customer-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .see-more-btn {
+      display: block; width: 100%; padding: 10px 16px;
+      background: transparent; border: 1px dashed var(--border-strong);
+      border-radius: var(--radius); color: var(--gold);
+      font-family: var(--font-body); font-size: 12px; letter-spacing: 0.06em;
+      text-align: center; cursor: pointer; margin-top: 4px;
+      transition: all var(--transition);
+    }
+    .see-more-btn:hover { background: var(--gold-dim); border-style: solid; }
+
+    .delete-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 6px;
+      border: 1px solid transparent; background: transparent;
+      color: var(--text-muted); font-size: 11px; cursor: pointer; flex-shrink: 0;
+      transition: all var(--transition);
+    }
+    .delete-btn:hover { background: var(--danger-dim); border-color: rgba(196,80,80,0.3); color: var(--danger); }
+
+    .customer-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 16px; background: var(--bg-elevated);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      cursor: pointer; transition: all var(--transition);
+    }
+    .customer-row:hover { border-color: var(--border-strong); background: rgba(201,165,90,0.05); }
+
+    .customer-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--bg-card-alt); border: 1px solid var(--border-strong);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 15px; font-weight: 600;
+      color: var(--gold); flex-shrink: 0;
+    }
+
+    .customer-info { flex: 1; min-width: 0; }
+    .customer-name { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+    .customer-meta { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0; }
+    .badge-positive{ background: var(--success-dim); color: var(--success); border: 1px solid rgba(90,158,106,0.28); }
+    .badge-neutral { background: rgba(122,117,112,0.15); color: var(--neutral); border: 1px solid rgba(122,117,112,0.28); }
+    .badge-negative{ background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(196,80,80,0.28); }
+    .badge-high    { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(196,80,80,0.28); }
+    .badge-medium  { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(184,146,46,0.28); }
+    .badge-low     { background: var(--success-dim); color: var(--success); border: 1px solid rgba(90,158,106,0.28); }
+
+    .risk-tag { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
+    .risk-tag-urgent   { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(196,80,80,0.35); }
+    .risk-tag-drifting { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(184,146,46,0.35); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state svg { opacity: 0.25; margin-bottom: 14px; }
+    .empty-state p { font-size: 13.5px; margin-bottom: 14px; }
+
+    /* Forms */
+    .form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 36px; max-width: 660px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text-primary);
+      font-family: var(--font-body); font-size: 14.5px; padding: 12px 14px;
+      transition: border-color var(--transition); outline: none;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--gold-dim); }
+    .form-group textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+    .form-group select option { background: var(--bg-elevated); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+    .section-divider { display: flex; align-items: center; gap: 14px; margin: 32px 0 24px; }
+    .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border-strong), transparent); }
+    .section-divider-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+
+    .bulk-import-area { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+    .btn-bulk { display: inline-flex; align-items: center; gap: 9px; padding: 14px 20px; border-radius: var(--radius); font-family: var(--font-body); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all var(--transition); border: 1px solid var(--border); flex: 1; min-width: 190px; }
+    .btn-bulk-download { background: var(--bg-elevated); color: var(--text-secondary); }
+    .btn-bulk-download:hover { border-color: var(--border-strong); color: var(--text-primary); }
+    .btn-bulk-import { background: var(--gold-dim); color: var(--gold-light); border-color: var(--border-strong); }
+    .btn-bulk-import:hover { background: rgba(201,165,90,0.18); border-color: var(--gold); transform: translateY(-1px); }
+    .btn-bulk svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.75; }
+    .bulk-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; line-height: 1.6; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 24px; border-radius: var(--radius); font-family: var(--font-body); font-size: 13.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all var(--transition); letter-spacing: 0.02em; }
+    .btn-primary { background: linear-gradient(135deg, var(--gold) 0%, #9a7830 100%); color: #0a0800; border-color: var(--gold); }
+    .btn-primary:hover { background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%); transform: translateY(-1px); box-shadow: 0 7px 20px rgba(201,165,90,0.28); }
+    .btn-primary:disabled { opacity: 0.48; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+    .btn-secondary:hover { border-color: var(--border-strong); color: var(--text-primary); background: var(--gold-dim); }
+    .btn-ghost { background: transparent; color: var(--gold); border-color: var(--border); padding: 5px 12px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .btn-ghost:hover { background: var(--gold-dim); border-color: var(--border-strong); }
+    .form-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+    /* Analysis */
+    .analysis-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .feedback-select-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; }
+    .feedback-item { padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; transition: all var(--transition); background: var(--bg-elevated); }
+    .feedback-item:hover, .feedback-item.selected { border-color: var(--border-strong); background: var(--gold-dim); }
+    .feedback-item.selected { border-color: var(--gold); }
+    .feedback-item-name { font-weight: 500; font-size: 13.5px; margin-bottom: 3px; }
+    .feedback-item-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+
+    .analysis-result { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; min-height: 380px; }
+    .analysis-result.loading { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+
+    .spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .result-field { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .result-field.full { grid-column: 1 / -1; }
+    .result-field-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+    .result-field-value { font-size: 14.5px; font-weight: 500; color: var(--text-primary); }
+    .result-action { background: rgba(201,165,90,0.06); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 18px 22px; margin-top: 8px; }
+    .result-action-label { font-family: var(--font-display); font-size: 17px; color: var(--gold); margin-bottom: 7px; }
+    .result-action-text { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* Actions */
+    .actions-layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+    .action-customer-list { display: flex; flex-direction: column; gap: 7px; max-height: 500px; overflow-y: auto; }
+    .action-customer-list::-webkit-scrollbar { width: 3px; }
+    .action-customer-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+    .action-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; }
+    .action-tabs { display: flex; gap: 7px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+    .action-tab { padding: 7px 18px; border-radius: var(--radius); background: transparent; border: 1px solid transparent; color: var(--text-muted); font-family: var(--font-body); font-size: 12.5px; cursor: pointer; transition: all var(--transition); }
+    .action-tab.active { background: var(--gold-dim); border-color: var(--border); color: var(--gold-light); }
+    .message-box { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; font-size: 14.5px; line-height: 1.75; color: var(--text-secondary); min-height: 170px; white-space: pre-wrap; margin-bottom: 18px; }
+    .message-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .message-channel { font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; right: 28px; background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 12px 18px; font-size: 13.5px; color: var(--text-primary); box-shadow: var(--shadow); z-index: 10000; transform: translateY(70px); opacity: 0; transition: all 0.30s cubic-bezier(0.4,0,0.2,1); display: flex; align-items: center; gap: 9px; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(90,158,106,0.4); }
+    .toast.error   { border-color: rgba(196,80,80,0.4); }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: 32px 36px; width: 100%; max-width: 460px; box-shadow: var(--shadow); animation: fadeIn 0.28s ease; }
+    .modal h2 { font-family: var(--font-display); font-size: 26px; margin-bottom: 7px; }
+    .modal p { color: var(--text-secondary); font-size: 13.5px; margin-bottom: 22px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+
+    /* Footer */
+    .app-footer { text-align: center; padding: 20px 44px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; margin-left: var(--nav-width); }
+
+    /* Mobile */
+    .mobile-toggle { display: none; position: fixed; top: 14px; left: 14px; z-index: 200; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px; cursor: pointer; color: var(--text-primary); }
+
+    /* ── Nudge cards ── */
+    .nudge-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nudge-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+      background: var(--gold);
+      border-radius: 3px 0 0 3px;
+    }
+
+    .nudge-card.nudge-resolved::before { background: var(--success); }
+
+    .nudge-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .nudge-customer {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .nudge-info { flex: 1; }
+    .nudge-name { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+    .nudge-meta { font-size: 12px; color: var(--text-muted); }
+
+    .nudge-time {
+      font-size: 11px; color: var(--warning);
+      background: var(--warning-dim);
+      border: 1px solid rgba(184,146,46,0.28);
+      border-radius: 6px; padding: 3px 9px;
+      letter-spacing: 0.04em; flex-shrink: 0;
+    }
+
+    .nudge-time.overdue { color: var(--danger); background: var(--danger-dim); border-color: rgba(196,80,80,0.28); }
+    .nudge-time.done    { color: var(--success); background: var(--success-dim); border-color: rgba(90,158,106,0.28); }
+
+    .nudge-notes {
+      font-size: 13px; color: var(--text-secondary);
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 14px;
+      line-height: 1.6; margin-bottom: 16px;
+    }
+
+    .nudge-message-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px;
+      font-size: 14px; line-height: 1.75;
+      color: var(--text-secondary); min-height: 80px;
+      white-space: pre-wrap; margin-bottom: 14px;
+      display: none;
+    }
+
+    .nudge-message-box.visible { display: block; }
+
+    .nudge-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .nudge-resolved-label {
+      font-size: 12px; color: var(--success);
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    @media (max-width: 1100px) {
+      .grid-4, .grid-5 { grid-template-columns: repeat(2,1fr); }
+      .grid-2, .analysis-layout, .actions-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .app-footer { margin-left: 0; }
+      .screen { padding: 68px 18px 40px; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .mobile-toggle { display: flex; }
+      .screen-header h1 { font-size: 30px; }
+      #dashGreeting { font-size: 22px; }
+      .form-card { padding: 22px 18px; }
+      .bulk-import-area { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════ APP LOADER ════ -->
+  <div id="appLoader">
+    <div class="spinner"></div>
+    <p style="color:var(--text-muted);font-size:13px;letter-spacing:0.06em;">Loading Re10Xion&hellip;</p>
+  </div>
+
+  <!-- ════ AUTH SCREEN ════ -->
+  <div id="authScreen" style="display:none;">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-icon">R</div>
+        <div class="auth-brand">Re<span>10</span>Xion</div>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create Account</button>
+      </div>
+
+      <div class="auth-error" id="authError"></div>
+
+      <!-- Login form -->
+      <div id="loginForm">
+        <div class="auth-form">
+          <input type="email" id="loginEmail" placeholder="Business email address" autocomplete="email" />
+          <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
+          <button class="btn-auth" id="loginBtn" onclick="handleLogin()">Sign In</button>
+        </div>
+      </div>
+
+      <!-- Signup form -->
+      <div id="signupForm" style="display:none;">
+        <div class="auth-form">
+          <input type="email" id="signupEmail" placeholder="Business email address" autocomplete="email" />
+          <input type="password" id="signupPassword" placeholder="Create a password (min. 6 characters)" autocomplete="new-password" />
+          <button class="btn-auth" id="signupBtn" onclick="handleSignup()">Create Free Account</button>
+        </div>
+      </div>
+
+      <p class="auth-footnote">Your data is private and secure. Free to use.</p>
+    </div>
+  </div>
+
+  <!-- ════ ONBOARDING (business profile setup) ════ -->
+  <div id="onboardingOverlay">
+    <div class="onboarding-card">
+      <h2>Stop losing customers<br>you <em>already earned.</em></h2>
+      <div class="ob-form">
+        <div>
+          <label for="obBusinessName">Business Name</label>
+          <input type="text" id="obBusinessName" placeholder="e.g. BeulahLuxe, Lagos Roast Co." autocomplete="off" />
+        </div>
+        <div>
+          <label for="obIndustry">Business / Industry Type</label>
+          <input type="text" id="obIndustry" placeholder="e.g. Fashion, Restaurant, Fintech, Salon..." autocomplete="off" />
+        </div>
+        <button class="btn-onboard" id="obGetStartedBtn">Get Started</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ MOBILE TOGGLE ════ -->
+  <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+
+  <!-- ════ APP SHELL ════ -->
+  <div class="app" id="appShell" style="display:none;">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <div class="brand-icon">R</div>
+          <div>
+            <div class="brand-name">Re<span>10</span>Xion</div>
+            <div class="brand-sub" id="sidebarBizName"></div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <div class="nav-section-label">Overview</div>
+        <button class="nav-item active" data-screen="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </button>
+
+        <div class="nav-section-label">Manage</div>
+        <button class="nav-item" data-screen="log">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          Customers
+        </button>
+        <button class="nav-item" data-screen="analysis">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Feedback
+        </button>
+        <button class="nav-sub-item" id="navQuarterly" onclick="navigateTo('quarterly')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          Quarterly Reviews
+        </button>
+        <button class="nav-item" data-screen="actions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Actions
+        </button>
+        <button class="nav-sub-item" id="navNudges" onclick="navigateTo('nudges')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          Follow-up Nudges
+          <span id="nudgeBadge" style="display:none;margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;min-width:18px;text-align:center;"></span>
+        </button>
+
+        <div class="nav-section-label">Account</div>
+        <div class="nav-item" style="cursor:default;opacity:0.4;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Settings
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar" id="userAvatar">?</div>
+          <div class="user-email" id="userEmail">Loading...</div>
+        </div>
+        <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- Dashboard -->
+      <section class="screen active" id="screen-dashboard">
+        <div class="dash-date" id="dashDate"></div>
+        <div id="dashGreeting">Here's what's happening at <span id="dashBizName">your business</span> today.</div>
+
+        <div class="grid-4">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Customers</div>
+            <div class="kpi-value" id="kpiTotal">—</div>
+            <div class="kpi-sub up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 11 12 6 7 11"/></svg>
+              <span>Logged interactions</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">At Risk</div>
+            <div class="kpi-value danger" id="kpiAtRisk">—</div>
+            <div class="kpi-sub warn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Needs attention
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Satisfaction</div>
+            <div class="kpi-value gold" id="kpiHealth">—</div>
+            <div class="kpi-sub up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 11 12 6 7 11"/></svg>
+              Sentiment index
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Referrals Ready</div>
+            <div class="kpi-value" id="kpiHappy">—</div>
+            <div class="kpi-sub mute">Ready to nudge</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              At-Risk Customers
+              <button class="btn btn-ghost" onclick="navigateTo('actions')">View All</button>
+            </div>
+            <div class="customer-list" id="atRiskList"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Sentiment This Month</div>
+            <div class="sentiment-rows">
+              <div class="sentiment-row">
+                <div class="sentiment-row-label">Positive</div>
+                <div class="sentiment-row-bar-wrap"><div class="sentiment-row-bar sbar-positive" id="sbarPositive" style="width:0%"></div></div>
+                <div class="sentiment-row-pct" id="spctPositive">0%</div>
+              </div>
+              <div class="sentiment-row">
+                <div class="sentiment-row-label">Neutral</div>
+                <div class="sentiment-row-bar-wrap"><div class="sentiment-row-bar sbar-neutral" id="sbarNeutral" style="width:0%"></div></div>
+                <div class="sentiment-row-pct" id="spctNeutral">0%</div>
+              </div>
+              <div class="sentiment-row">
+                <div class="sentiment-row-label">Negative</div>
+                <div class="sentiment-row-bar-wrap"><div class="sentiment-row-bar sbar-negative" id="sbarNegative" style="width:0%"></div></div>
+                <div class="sentiment-row-pct" id="spctNegative">0%</div>
+              </div>
+            </div>
+            <div class="priority-action-card" id="priorityAction" style="display:none;">
+              <div class="priority-action-label">Today's Priority Action</div>
+              <div class="priority-action-text" id="priorityActionText"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="card-title">Recent Activity</div>
+          <div class="customer-list" id="recentList"></div>
+        </div>
+      </section>
+
+      <!-- Add Customer -->
+      <section class="screen" id="screen-log">
+        <div class="screen-header">
+          <h1>Add Customer</h1>
+          <p>Log a new interaction manually, or import your existing customer list in bulk via CSV.</p>
+        </div>
+        <div class="form-card">
+          <div style="font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:var(--text-muted);margin-bottom:18px;">Manual Entry</div>
+          <form id="logForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fullName">Customer Name</label>
+                <input type="text" id="fullName" placeholder="e.g. Aisha Okafor" required />
+              </div>
+              <div class="form-group">
+                <label for="channel">Channel</label>
+                <select id="channel">
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Phone">Phone Call</option>
+                  <option value="In-Person">In-Person</option>
+                  <option value="Email">Email</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Customer Email</label>
+                <input type="email" id="email" placeholder="customer@example.com" />
+              </div>
+              <div class="form-group">
+                <label for="birthday">Birthday</label>
+                <input type="date" id="birthday" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="date">Interaction Date</label>
+                <input type="date" id="date" required />
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone / Handle (optional)</label>
+                <input type="text" id="phone" placeholder="@username or +234..." />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="notes">Feedback / Notes</label>
+              <textarea id="notes" placeholder="What did the customer say? Any concerns, compliments, or requests..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-primary" id="saveCustomerBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Customer
+              </button>
+              <button type="button" class="btn btn-secondary" id="saveAndAnalyzeBtn">Save &amp; Analyze</button>
+            </div>
+          </form>
+
+          <div class="section-divider"><span class="section-divider-label">Bulk Import</span></div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;line-height:1.65;">Upload a CSV to add multiple customers at once.</div>
+          <div class="bulk-import-area">
+            <button type="button" class="btn-bulk btn-bulk-download" id="downloadTemplateBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download CSV Template
+            </button>
+            <button type="button" class="btn-bulk btn-bulk-import" id="importCsvBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import CSV File
+            </button>
+          </div>
+          <p class="bulk-hint">Accepted columns: Name, Email, Channel, Birthday.</p>
+        </div>
+      </section>
+
+      <!-- Feedback Analysis -->
+      <section class="screen" id="screen-analysis">
+        <div class="screen-header">
+          <h1>Feedback Analysis</h1>
+          <p>Select a customer interaction and let AI decode sentiment, identify the issue, and tell you what to do next.</p>
+        </div>
+        <div class="analysis-layout">
+          <div class="feedback-select-card">
+            <div style="font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:var(--text-label);margin-bottom:14px;">Select Interaction</div>
+            <div id="feedbackList"></div>
+          </div>
+          <div class="analysis-result" id="analysisResult">
+            <div class="empty-state">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <p>Select a customer interaction on the left to get AI-powered insights.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quarterly Reviews -->
+      <section class="screen" id="screen-quarterly">
+        <div class="screen-header">
+          <h1>Quarterly Reviews</h1>
+          <p>Generate AI-crafted retention survey questions tailored to your business type.</p>
+        </div>
+        <div style="max-width:640px;">
+          <div class="form-card">
+            <div class="form-group" style="margin-bottom:6px;">
+              <label for="businessType">Business Type</label>
+              <input type="text" id="businessType" placeholder="e.g. Boutique, Restaurant, Hair Salon, Fintech…" />
+            </div>
+            <div class="form-actions" style="margin-top:18px;">
+              <button type="button" class="btn btn-primary" id="generateSurveyBtn" onclick="generateSurveyQuestions()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                Generate Survey Questions
+              </button>
+            </div>
+          </div>
+          <div id="surveyResult" style="margin-top:24px;display:none;"></div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="screen" id="screen-actions">
+        <div class="screen-header">
+          <h1>Recovery &amp; Referral Actions</h1>
+          <p>AI-crafted messages to win customers back or turn them into advocates.</p>
+        </div>
+        <div class="actions-layout">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px;">Customers</div>
+            <div class="action-customer-list" id="actionCustomerList"></div>
+          </div>
+          <div class="action-panel" id="actionPanel">
+            <div class="empty-state"><p>Select a customer to generate messages.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Follow-up Nudges -->
+      <section class="screen" id="screen-nudges">
+        <div class="screen-header">
+          <h1>Follow-up Nudges</h1>
+          <p>Customers added more than 24 hours ago who haven't received a follow-up yet. One click generates the message — thank-you, feedback request, or both.</p>
+        </div>
+        <div id="nudgeList"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none;" />
+  <footer class="app-footer" id="appFooter" style="display:none;">© 2026 Re10Xion</footer>
+
+  <!-- Gemini Key Modal -->
+  <div class="modal-overlay" id="apiModal">
+    <div class="modal">
+      <h2>Groq API Key</h2>
+      <p>Get your free key at <strong>console.groq.com</strong> &rarr; API Keys &rarr; Create API Key. Stored in your browser only.</p>
+      <div class="form-group">
+        <label for="apiKeyInput">API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="apiModalCancel">Cancel</button>
+        <button class="btn btn-primary" id="apiModalSave">Save Key</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  'use strict';
+
+  /* ══════════════════════════════════════════════════════
+     CONFIGURATION — PASTE YOUR VALUES HERE
+  ══════════════════════════════════════════════════════ */
+  var SUPABASE_URL  = 'https://qqmytyveyphpgwqegpma.supabase.co';
+  var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbXl0eXZleXBocGd3cWVncG1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjYyMzcsImV4cCI6MjA5Njc0MjIzN30.53DoKG2j0Br33UhOny_OEx1DEfVPulHEUcf9OlLmoO4';
+  var GEMINI_KEY    = 'PASTE_YOUR_GEMINI_KEY_HERE'; /* Get free key at aistudio.google.com */
+  /* ══════════════════════════════════════════════════════ */
+
+  var GEMINI_API_STORE = 're10xion_groq_key';
+  var SESSION_STORE    = 're10xion_session';
+
+  /* ══════════════════════════════════════════════════════
+     SUPABASE REST HELPERS — no SDK, works everywhere
+  ══════════════════════════════════════════════════════ */
+  var _authToken = null;
+
+  function sbHeaders(extra) {
+    var h = {
+      'apikey': SUPABASE_ANON,
+      'Content-Type': 'application/json'
+    };
+    if (_authToken) h['Authorization'] = 'Bearer ' + _authToken;
+    else h['Authorization'] = 'Bearer ' + SUPABASE_ANON;
+    if (extra) Object.assign(h, extra);
+    return h;
+  }
+
+  async function sbAuth(path, body) {
+    var res = await fetch(SUPABASE_URL + '/auth/v1' + path, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  async function sbGet(table, filters) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?select=*';
+    if (filters) url += '&' + filters;
+    var res = await fetch(url, { headers: sbHeaders({ 'Prefer': 'return=representation' }) });
+    if (!res.ok) { var e = await res.json(); throw new Error(e.message || 'DB read error'); }
+    return res.json();
+  }
+
+  async function sbUpsert(table, data) {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=representation' }),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) { var e = await res.json(); throw new Error(e.message || 'DB write error'); }
+    return res.json();
+  }
+
+  async function sbDelete(table, filters) {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + filters, {
+      method: 'DELETE',
+      headers: sbHeaders()
+    });
+    if (!res.ok) { var e = await res.json(); console.error('DB delete error:', e); }
+  }
+
+  function saveSession(data) {
+    if (data && data.access_token) {
+      _authToken = data.access_token;
+      localStorage.setItem(SESSION_STORE, JSON.stringify({
+        access_token: data.access_token,
+        user: data.user
+      }));
+    }
+  }
+
+  function loadSession() {
+    try {
+      var s = JSON.parse(localStorage.getItem(SESSION_STORE) || 'null');
+      if (s && s.access_token) { _authToken = s.access_token; return s; }
+    } catch(e) {}
+    return null;
+  }
+
+  function clearSession() {
+    _authToken = null;
+    localStorage.removeItem(SESSION_STORE);
+  }
+
+  /* ── State ── */
+  var currentUser    = null;
+  var bizProfile     = null;
+  var records        = [];
+  var selectedFeedbackId = null;
+  var selectedActionId   = null;
+  var activeActionTab    = 'recovery';
+
+  /* ══════════════════════════════════════════════════════
+     BOOT
+  ══════════════════════════════════════════════════════ */
+  (async function boot() {
+    var session = loadSession();
+    if (session && session.user) {
+      currentUser = session.user;
+      try {
+        await afterLogin();
+      } catch(e) {
+        /* Session expired — clear and show auth */
+        clearSession();
+        currentUser = null;
+        hideLoader();
+        showAuthScreen();
+      }
+    } else {
+      hideLoader();
+      showAuthScreen();
+    }
+  })();
+
+  function hideLoader() { document.getElementById('appLoader').classList.add('hidden'); }
+  function showLoader() { document.getElementById('appLoader').classList.remove('hidden'); }
+
+  /* ══════════════════════════════════════════════════════
+     AUTH
+  ══════════════════════════════════════════════════════ */
+  function showAuthScreen() {
+    document.getElementById('authScreen').style.display  = 'flex';
+    document.getElementById('appShell').style.display    = 'none';
+    document.getElementById('appFooter').style.display   = 'none';
+    document.getElementById('onboardingOverlay').classList.remove('visible');
+  }
+
+  function showApp() {
+    document.getElementById('authScreen').style.display  = 'none';
+    document.getElementById('appShell').style.display    = 'flex';
+    document.getElementById('appFooter').style.display   = 'block';
+  }
+
+  function switchAuthTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+    document.getElementById('loginForm').style.display  = tab === 'login'  ? 'block' : 'none';
+    document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+    document.getElementById('authError').classList.remove('show');
+  }
+
+  function showAuthError(msg) {
+    var el = document.getElementById('authError');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  async function handleLogin() {
+    var email    = document.getElementById('loginEmail').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    if (!email || !password) { showAuthError('Please enter your email and password.'); return; }
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'Signing in...';
+    try {
+      var data = await sbAuth('/token?grant_type=password', { email: email, password: password });
+      if (data.error || data.error_description) {
+        showAuthError(data.error_description || data.error || 'Sign in failed.');
+        btn.disabled = false; btn.textContent = 'Sign In';
+        return;
+      }
+      saveSession(data);
+      currentUser = data.user;
+      btn.disabled = false; btn.textContent = 'Sign In';
+      await afterLogin();
+    } catch(e) {
+      showAuthError('Connection failed. Check your internet and try again.');
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+
+  async function handleSignup() {
+    var email    = document.getElementById('signupEmail').value.trim();
+    var password = document.getElementById('signupPassword').value;
+    if (!email || !password) { showAuthError('Please fill in all fields.'); return; }
+    if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+    var btn = document.getElementById('signupBtn');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+    try {
+      var data = await sbAuth('/signup', { email: email, password: password });
+      btn.disabled = false; btn.textContent = 'Create Free Account';
+      if (data.error || data.error_description) {
+        showAuthError(data.error_description || data.error || 'Signup failed.');
+        return;
+      }
+      /* If email confirmation required, session won't have access_token yet */
+      if (data.access_token) {
+        saveSession(data);
+        currentUser = data.user;
+        await afterLogin();
+      } else {
+        showToast('Account created! Check your email to confirm, then sign in.');
+        switchAuthTab('login');
+      }
+    } catch(e) {
+      showAuthError('Connection failed. Check your internet and try again.');
+      btn.disabled = false; btn.textContent = 'Create Free Account';
+    }
+  }
+
+  async function handleLogout() {
+    try { await sbAuth('/logout', {}); } catch(e) {}
+    clearSession();
+    currentUser = null;
+    records = [];
+    bizProfile = null;
+    showAuthScreen();
+  }
+
+  async function afterLogin() {
+    hideLoader();
+    updateUserBadge();
+    await loadBizProfile();
+    await loadRecords();
+    showApp();
+    renderDashboard();
+    if (!bizProfile || !bizProfile.business_name) {
+      document.getElementById('onboardingOverlay').classList.add('visible');
+    }
+  }
+
+  function updateUserBadge() {
+    if (!currentUser) return;
+    var email = currentUser.email || '';
+    document.getElementById('userEmail').textContent = email;
+    document.getElementById('userAvatar').textContent = email.charAt(0).toUpperCase();
+  }
+
+  /* ══════════════════════════════════════════════════════
+     ONBOARDING
+  ══════════════════════════════════════════════════════ */
+  document.getElementById('obGetStartedBtn').addEventListener('click', async function() {
+    var name     = document.getElementById('obBusinessName').value.trim();
+    var industry = document.getElementById('obIndustry').value.trim();
+    if (!name) { document.getElementById('obBusinessName').focus(); return; }
+    await saveBizProfile({ business_name: name, industry: industry || 'General' });
+    applyBizProfile();
+    var ov = document.getElementById('onboardingOverlay');
+    ov.classList.add('fade-out');
+    setTimeout(function() { ov.classList.remove('visible','fade-out'); }, 520);
+    showToast('Welcome, ' + name + '. Let\'s get to work.');
+    renderDashboard();
+  });
+
+  ['obBusinessName','obIndustry'].forEach(function(id) {
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('obGetStartedBtn').click();
+    });
+  });
+
+  /* ══════════════════════════════════════════════════════
+     BIZ PROFILE
+  ══════════════════════════════════════════════════════ */
+  async function loadBizProfile() {
+    if (!currentUser || currentUser.id === 'local') {
+      bizProfile = JSON.parse(localStorage.getItem('re10xion_biz_v1') || 'null');
+      return;
+    }
+    try {
+      var rows = await sbGet('business_profiles', 'user_id=eq.' + currentUser.id + '&limit=1');
+      bizProfile = (rows && rows.length) ? rows[0] : null;
+      if (bizProfile) applyBizProfile();
+    } catch(e) {
+      bizProfile = JSON.parse(localStorage.getItem('re10xion_biz_v1') || 'null');
+    }
+  }
+
+  async function saveBizProfile(profile) {
+    profile.user_id = currentUser ? currentUser.id : 'local';
+    bizProfile = profile;
+    localStorage.setItem('re10xion_biz_v1', JSON.stringify(profile));
+    if (!currentUser || currentUser.id === 'local') return;
+    try { await sbUpsert('business_profiles', profile); } catch(e) { console.warn('Profile save error:', e); }
+  }
+
+  function applyBizProfile() {
+    if (!bizProfile) return;
+    var name = bizProfile.business_name || '';
+    var el = document.getElementById('dashGreeting');
+    if (el) el.innerHTML = 'Here\'s what\'s happening at <span id="dashBizName">' + esc(name) + '</span> today.';
+    var sb2 = document.getElementById('sidebarBizName');
+    if (sb2) sb2.textContent = name;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     RECORDS
+  ══════════════════════════════════════════════════════ */
+  async function loadRecords() {
+    if (!currentUser || currentUser.id === 'local') {
+      records = JSON.parse(localStorage.getItem('re10xion_records_local') || '[]');
+      if (!records.length) { records = getDefaultSeed(); saveLocalRecords(); }
+      return;
+    }
+    try {
+      var rows = await sbGet('customers', 'user_id=eq.' + currentUser.id + '&order=created_at.desc');
+      records = rows || [];
+      if (!records.length) { records = getDefaultSeed(); }
+    } catch(e) {
+      console.warn('Records load error:', e);
+      records = JSON.parse(localStorage.getItem('re10xion_records_local') || '[]');
+      if (!records.length) { records = getDefaultSeed(); }
+    }
+  }
+
+  async function saveRecord(record) {
+    saveLocalRecords();
+    if (!currentUser || currentUser.id === 'local') return;
+    try {
+      record.user_id = currentUser.id;
+      await sbUpsert('customers', record);
+    } catch(e) { console.warn('Record save error:', e); }
+  }
+
+  async function deleteRecord(id) {
+    records = records.filter(function(r) { return r.id !== id; });
+    saveLocalRecords();
+    if (!currentUser || currentUser.id === 'local') return;
+    try { await sbDelete('customers', 'id=eq.' + id + '&user_id=eq.' + currentUser.id); } catch(e) {}
+  }
+
+  function saveLocalRecords() { localStorage.setItem('re10xion_records_local', JSON.stringify(records)); }
+
+  function getDefaultSeed() {
+    return [
+      { id:'seed-a01', user_id: currentUser ? currentUser.id : 'local', full_name:'Amaka Okonkwo', channel:'WhatsApp', interaction_date:'2026-05-12', phone:'+2348031234567', email:'', birthday:'',
+        notes:'No booking in 6 weeks and complained about late delivery last time.',
+        status:'flagged', created_at:'2026-05-12T09:14:00Z',
+        sentiment:'negative', issue_category:'Delivery', churn_risk:'high',
+        suggested_action:'Call Amaka personally. Apologize for the delay and offer a 15% discount on her next order.',
+        analysis_summary:'Amaka has gone 6 weeks without a booking and previously raised a delivery complaint. Highest churn risk today.' },
+      { id:'seed-a02', user_id: currentUser ? currentUser.id : 'local', full_name:'Blessing Taiwo', channel:'Instagram', interaction_date:'2026-05-18', phone:'@blessingtaiwo', email:'', birthday:'',
+        notes:'Neutral feedback. Came in, paid, left. Has not re-ordered in 3 weeks.',
+        status:'interaction_logged', created_at:'2026-05-18T11:30:00Z',
+        sentiment:'neutral', issue_category:'Service', churn_risk:'medium',
+        suggested_action:'Send a friendly check-in message on Instagram.',
+        analysis_summary:'Blessing is passive — no complaints but no loyalty signals either.' },
+      { id:'seed-a03', user_id: currentUser ? currentUser.id : 'local', full_name:'Chioma Nwosu', channel:'WhatsApp', interaction_date:'2026-04-29', phone:'+2348057654321', email:'', birthday:'',
+        notes:'Quality concern raised. Said the fabric quality dropped compared to her first order.',
+        status:'flagged', created_at:'2026-04-29T14:02:00Z',
+        sentiment:'negative', issue_category:'Product Quality', churn_risk:'high',
+        suggested_action:'WhatsApp Chioma today. Acknowledge the quality drop and offer a free replacement.',
+        analysis_summary:'Chioma noticed a quality decline. This erodes trust and needs a personal response within 24 hours.' }
+    ];
+  }
+
+  /* ══════════════════════════════════════════════════════
+     UTILITIES
+  ══════════════════════════════════════════════════════ */
+  function uuid() {
+    return crypto.randomUUID ? crypto.randomUUID() :
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+  }
+
+  function esc(str) {
+    var d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    try { return new Date(d + (d.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }); }
+    catch(e) { return d; }
+  }
+
+  function initials(name) {
+    return (name || '?').split(' ').map(function(w) { return w[0]; }).join('').slice(0,2).toUpperCase();
+  }
+
+  /* Helper — get field handling both old and new schema */
+  function rfield(r, newKey, oldKey) { return r[newKey] !== undefined ? r[newKey] : r[oldKey]; }
+  function getName(r)     { return rfield(r,'full_name','fullName') || ''; }
+  function getDate(r)     { return rfield(r,'interaction_date','date') || rfield(r,'created_at','timeMarked') || ''; }
+  function getSentiment(r){ return r.sentiment || ''; }
+  function getChurn(r)    { return rfield(r,'churn_risk','churnRisk') || ''; }
+  function getNotes(r)    { return r.notes || ''; }
+  function getAction(r)   { return rfield(r,'suggested_action','suggestedAction') || ''; }
+  function getSummary(r)  { return rfield(r,'analysis_summary','analysis') ? (r.analysis_summary || (r.analysis && r.analysis.summary) || '') : ''; }
+  function getIssue(r)    { return rfield(r,'issue_category','issueCategory') || ''; }
+
+  function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type || 'success');
+    setTimeout(function() { t.className = 'toast'; }, 3200);
+  }
+
+  function sentimentBadge(s) {
+    var map = { positive:'badge-positive', neutral:'badge-neutral', negative:'badge-negative' };
+    return '<span class="badge ' + (map[s] || 'badge-neutral') + '">' + (s || 'unknown') + '</span>';
+  }
+
+  function riskBadge(r) {
+    if (!r) return '';
+    var map = { high:'badge-high', medium:'badge-medium', low:'badge-low' };
+    return '<span class="badge ' + (map[r] || 'badge-neutral') + '">' + r + ' risk</span>';
+  }
+
+  function riskTag(record) {
+    var c = getChurn(record), s = getSentiment(record);
+    if (c === 'high' || s === 'negative' || record.status === 'flagged')
+      return '<span class="risk-tag risk-tag-urgent">Urgent</span>';
+    if (c === 'medium')
+      return '<span class="risk-tag risk-tag-drifting">Drifting</span>';
+    return '';
+  }
+
+  function isAtRisk(r) {
+    return getChurn(r) === 'high' || getChurn(r) === 'medium' ||
+           getSentiment(r) === 'negative' || r.status === 'flagged';
+  }
+
+  function computeHealthScore() {
+    if (!records.length) return null;
+    var a = records.filter(function(r) { return getSentiment(r); });
+    if (!a.length) return null;
+    var sum = a.reduce(function(acc, r) {
+      return acc + (getSentiment(r) === 'positive' ? 100 : getSentiment(r) === 'neutral' ? 60 : 20);
+    }, 0);
+    return Math.round(sum / a.length);
+  }
+
+  function setDashDate() {
+    var el = document.getElementById('dashDate');
+    if (!el) return;
+    el.textContent = new Date().toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).toUpperCase();
+  }
+
+  /* ══════════════════════════════════════════════════════
+     DELETE CUSTOMER
+  ══════════════════════════════════════════════════════ */
+  async function deleteCustomer(id, event) {
+    if (event) event.stopPropagation();
+    var rec = records.find(function(r) { return r.id === id; });
+    if (!rec) return;
+    if (!confirm('Delete ' + getName(rec) + '? This cannot be undone.')) return;
+    await deleteRecord(id);
+    if (selectedFeedbackId === id) selectedFeedbackId = null;
+    if (selectedActionId === id)   selectedActionId   = null;
+    showToast(getName(rec) + ' deleted.');
+    renderDashboard();
+    renderFeedbackList();
+    renderActionsScreen();
+  }
+
+  /* ══════════════════════════════════════════════════════
+     NAVIGATION
+  ══════════════════════════════════════════════════════ */
+  function navigateTo(screen) {
+    document.querySelectorAll('.nav-item').forEach(function(n) {
+      var match = n.dataset.screen === screen ||
+        (screen === 'quarterly' && n.dataset.screen === 'analysis') ||
+        (screen === 'nudges'    && n.dataset.screen === 'actions');
+      n.classList.toggle('active', match);
+    });
+    document.querySelectorAll('.nav-sub-item').forEach(function(n) {
+      n.classList.toggle('active',
+        (n.id === 'navQuarterly' && screen === 'quarterly') ||
+        (n.id === 'navNudges'    && screen === 'nudges')
+      );
+    });
+    document.querySelectorAll('.screen').forEach(function(s) {
+      s.classList.toggle('active', s.id === 'screen-' + screen);
+    });
+    document.getElementById('sidebar').classList.remove('open');
+    if (screen === 'dashboard') renderDashboard();
+    if (screen === 'analysis')  renderFeedbackList();
+    if (screen === 'actions')   renderActionsScreen();
+    if (screen === 'nudges')    renderNudgesScreen();
+  }
+
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() { if (item.dataset.screen) navigateTo(item.dataset.screen); });
+  });
+
+  document.getElementById('mobileToggle').addEventListener('click', function() {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  /* ══════════════════════════════════════════════════════
+     DASHBOARD
+  ══════════════════════════════════════════════════════ */
+  function renderDashboard() {
+    setDashDate();
+    applyBizProfile();
+
+    var total  = records.length;
+    var health = computeHealthScore();
+    var atRisk = records.filter(isAtRisk);
+    var happy  = records.filter(function(r) { return getSentiment(r) === 'positive' && getChurn(r) === 'low'; });
+
+    document.getElementById('kpiTotal').textContent  = total;
+    document.getElementById('kpiHealth').textContent = health !== null ? health + '%' : '—';
+    document.getElementById('kpiAtRisk').textContent = atRisk.length;
+    document.getElementById('kpiHappy').textContent  = happy.length;
+
+    updateNudgeBadge();
+
+    var counts = { positive:0, neutral:0, negative:0 };
+    records.forEach(function(r) { var s = getSentiment(r); if (s && counts[s] !== undefined) counts[s]++; });
+    var tot = counts.positive + counts.neutral + counts.negative || 1;
+    var pp = Math.round(counts.positive / tot * 100);
+    var np = Math.round(counts.neutral  / tot * 100);
+    var gp = 100 - pp - np;
+
+    document.getElementById('sbarPositive').style.width = pp + '%';
+    document.getElementById('sbarNeutral').style.width  = np + '%';
+    document.getElementById('sbarNegative').style.width = gp + '%';
+    document.getElementById('spctPositive').textContent = pp + '%';
+    document.getElementById('spctNeutral').textContent  = np + '%';
+    document.getElementById('spctNegative').textContent = gp + '%';
+
+    var topUrgent = atRisk.find(function(r) { return getChurn(r) === 'high' || getSentiment(r) === 'negative'; });
+    var paCard = document.getElementById('priorityAction');
+    if (topUrgent && getAction(topUrgent)) {
+      paCard.style.display = 'block';
+      var act = getAction(topUrgent);
+      document.getElementById('priorityActionText').innerHTML =
+        '<strong>' + esc(getName(topUrgent)) + '</strong> ' + esc(act.charAt(0).toLowerCase() + act.slice(1));
+    } else { paCard.style.display = 'none'; }
+
+    var arEl = document.getElementById('atRiskList');
+    if (!atRisk.length) {
+      arEl.innerHTML = '<div class="empty-state"><p>No at-risk customers right now.</p></div>';
+    } else {
+      var arRows = atRisk.slice(0,3).map(function(r) {
+        return '<div class="customer-row" onclick="selectCustomerForAction(\'' + r.id + '\')">'
+          + '<div class="customer-avatar">' + initials(getName(r)) + '</div>'
+          + '<div class="customer-info">'
+          + '<div class="customer-name">' + esc(getName(r)) + '</div>'
+          + '<div class="customer-meta">' + esc(getNotes(r).slice(0,52)) + '</div>'
+          + '</div>'
+          + riskTag(r)
+          + '<button class="delete-btn" onclick="deleteCustomer(\'' + r.id + '\',event)" title="Delete">&#10005;</button>'
+          + '</div>';
+      }).join('');
+      if (atRisk.length > 3) arRows += '<button class="see-more-btn" onclick="navigateTo(\'actions\')">See ' + (atRisk.length-3) + ' more &rarr;</button>';
+      arEl.innerHTML = arRows;
+    }
+
+    var recent = records.slice().sort(function(a,b) { return new Date(b.created_at||b.timeMarked) - new Date(a.created_at||a.timeMarked); });
+    var rrEl = document.getElementById('recentList');
+    if (!recent.length) {
+      rrEl.innerHTML = '<div class="empty-state"><p>No customers yet. <button class="btn btn-ghost" onclick="navigateTo(\'log\')">Add your first &rarr;</button></p></div>';
+    } else {
+      var rrRows = recent.slice(0,3).map(function(r) {
+        return '<div class="customer-row" onclick="selectCustomerForAnalysis(\'' + r.id + '\')">'
+          + '<div class="customer-avatar">' + initials(getName(r)) + '</div>'
+          + '<div class="customer-info">'
+          + '<div class="customer-name">' + esc(getName(r)) + '</div>'
+          + '<div class="customer-meta">' + esc(r.channel) + ' &middot; ' + formatDate(getDate(r)) + ' &middot; ' + esc(getNotes(r).slice(0,48)) + '</div>'
+          + '</div>'
+          + sentimentBadge(getSentiment(r))
+          + '<button class="delete-btn" onclick="deleteCustomer(\'' + r.id + '\',event)" title="Delete">&#10005;</button>'
+          + '</div>';
+      }).join('');
+      if (recent.length > 3) rrRows += '<button class="see-more-btn" onclick="navigateTo(\'analysis\')">See all ' + recent.length + ' customers &rarr;</button>';
+      rrEl.innerHTML = rrRows;
+    }
+
+    updateNudgeBadge();
+  }
+
+  /* ══════════════════════════════════════════════════════
+     ADD CUSTOMER
+  ══════════════════════════════════════════════════════ */
+  document.getElementById('date').valueAsDate = new Date();
+
+  async function saveCustomer(andAnalyze) {
+    var fullName = document.getElementById('fullName').value.trim();
+    var channel  = document.getElementById('channel').value;
+    var date     = document.getElementById('date').value;
+    var phone    = document.getElementById('phone').value.trim();
+    var notes    = document.getElementById('notes').value.trim();
+    var email    = document.getElementById('email').value.trim();
+    var birthday = document.getElementById('birthday').value;
+    if (!fullName) { showToast('Please enter a customer name.', 'error'); return; }
+
+    var record = {
+      id: uuid(),
+      user_id: currentUser ? currentUser.id : 'local',
+      full_name: fullName, channel: channel,
+      interaction_date: date, phone: phone, email: email, birthday: birthday,
+      notes: notes, status: 'interaction_logged',
+      created_at: new Date().toISOString(),
+      sentiment: notes ? null : 'neutral',
+      issue_category: null, churn_risk: null,
+      suggested_action: null, analysis_summary: null
+    };
+
+    records.unshift(record);
+    await saveRecord(record);
+    document.getElementById('logForm').reset();
+    document.getElementById('date').valueAsDate = new Date();
+    showToast(fullName + ' added.');
+
+    if (andAnalyze && notes) {
+      selectedFeedbackId = record.id;
+      navigateTo('analysis');
+      runAnalysis(record.id);
+    } else if (andAnalyze && !notes) {
+      showToast('Add feedback notes to run AI analysis.', 'error');
+    } else {
+      renderDashboard();
+      navigateTo('dashboard');
+    }
+  }
+
+  document.getElementById('saveCustomerBtn').addEventListener('click', function() { saveCustomer(false); });
+  document.getElementById('saveAndAnalyzeBtn').addEventListener('click', function() { saveCustomer(true); });
+
+  /* ══════════════════════════════════════════════════════
+     FEEDBACK ANALYSIS
+  ══════════════════════════════════════════════════════ */
+  function selectCustomerForAnalysis(id) { selectedFeedbackId = id; navigateTo('analysis'); renderFeedbackList(); }
+  function selectCustomerForAction(id)   { selectedActionId = id; navigateTo('actions'); }
+
+  function renderFeedbackList() {
+    var list = document.getElementById('feedbackList');
+    var withNotes = records.filter(function(r) { return getNotes(r).trim(); });
+    if (!withNotes.length) {
+      list.innerHTML = '<div class="empty-state"><p>No feedback yet.</p><button class="btn btn-ghost" onclick="navigateTo(\'log\')">Add a customer &rarr;</button></div>';
+      return;
+    }
+    list.innerHTML = withNotes.map(function(r) {
+      return '<div class="feedback-item ' + (selectedFeedbackId === r.id ? 'selected' : '') + '" onclick="selectFeedback(\'' + r.id + '\')">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">'
+        + '<div class="feedback-item-name">' + esc(getName(r)) + ' &middot; ' + esc(r.channel) + '</div>'
+        + '<button class="delete-btn" onclick="deleteCustomer(\'' + r.id + '\',event)" title="Delete">&#10005;</button>'
+        + '</div>'
+        + '<div class="feedback-item-text">' + esc(getNotes(r).slice(0,90)) + (getNotes(r).length > 90 ? '&hellip;' : '') + '</div>'
+        + (getSentiment(r) ? '<div style="margin-top:7px">' + sentimentBadge(getSentiment(r)) + ' ' + riskBadge(getChurn(r)) + '</div>' : '')
+        + '</div>';
+    }).join('');
+
+    if (selectedFeedbackId) {
+      var rec = records.find(function(r) { return r.id === selectedFeedbackId; });
+      var resultEl = document.getElementById('analysisResult');
+      if (rec && getSummary(rec)) {
+        renderAnalysisResult(rec);
+      } else if (rec) {
+        resultEl.innerHTML = '<div class="empty-state">'
+          + '<p>Ready to analyze: <strong>' + esc(getName(rec)) + '</strong>.</p>'
+          + '<button class="btn btn-primary" onclick="runAnalysis(\'' + selectedFeedbackId + '\')">Analyze Feedback</button>'
+          + '</div>';
+      }
+    }
+  }
+
+  function selectFeedback(id) {
+    selectedFeedbackId = id;
+    renderFeedbackList();
+    var rec = records.find(function(r) { return r.id === id; });
+    var resultEl = document.getElementById('analysisResult');
+    if (rec && getSummary(rec)) {
+      renderAnalysisResult(rec);
+    } else if (rec) {
+      resultEl.innerHTML = '<div class="empty-state">'
+        + '<p>Ready to analyze: <strong>' + esc(getName(rec)) + '</strong>.</p>'
+        + '<button class="btn btn-primary" onclick="runAnalysis(\'' + id + '\')">Analyze Feedback</button>'
+        + '</div>';
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════
+     GROQ AI — free, fast, no credit card needed
+     Model: llama3-8b-8192
+  ══════════════════════════════════════════════════════ */
+  function getGeminiKey() {
+    if (GEMINI_KEY && !GEMINI_KEY.includes('PASTE')) return GEMINI_KEY;
+    return localStorage.getItem(GEMINI_API_STORE) || '';
+  }
+
+  async function callGemini(prompt) {
+    var key = getGeminiKey();
+    if (!key || key.length < 10) {
+      document.getElementById('apiModal').classList.add('open');
+      throw new Error('Groq API key required');
+    }
+
+    var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4,
+        max_tokens: 1000
+      })
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return {}; });
+      throw new Error((err.error && err.error.message) || ('Groq API error ' + res.status));
+    }
+
+    var data = await res.json();
+    return data.choices[0].message.content;
+  }
+
+  function extractJSON(text) {
+    var match = text.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    return JSON.parse(text);
+  }
+
+  async function runAnalysis(recordId) {
+    var record = records.find(function(r) { return r.id === recordId; });
+    if (!record) return;
+    var resultEl = document.getElementById('analysisResult');
+    resultEl.className = 'analysis-result loading';
+    resultEl.innerHTML = '<div class="spinner"></div><p style="color:var(--text-muted);font-size:13px;">Analyzing feedback&hellip;</p>';
+
+    try {
+      var prompt = 'You are a customer retention expert for small businesses in Nigeria and Ghana. Analyze this customer feedback and return ONLY a valid JSON object with exactly these fields:\n{\n  "sentiment": "positive" or "neutral" or "negative",\n  "issueCategory": "Delivery" or "Pricing" or "Product Quality" or "Service" or "Communication" or "Referral Opportunity" or "None",\n  "churnRisk": "low" or "medium" or "high",\n  "suggestedAction": "one clear action to take within 24 hours",\n  "summary": "1-2 sentence plain summary of what the customer feels and why"\n}\n\nCustomer: ' + getName(record) + '\nChannel: ' + record.channel + '\nFeedback: ' + getNotes(record) + '\n\nReturn ONLY the JSON object, no other text.';
+
+      var raw      = await callGemini(prompt);
+      var analysis = extractJSON(raw);
+
+      record.sentiment       = analysis.sentiment;
+      record.issue_category  = analysis.issueCategory;
+      record.churn_risk      = analysis.churnRisk;
+      record.suggested_action= analysis.suggestedAction;
+      record.analysis_summary= analysis.summary;
+      if (analysis.churnRisk === 'high' || analysis.sentiment === 'negative') record.status = 'flagged';
+
+      await saveRecord(record);
+      renderAnalysisResult(record);
+      renderFeedbackList();
+      showToast('Analysis complete.');
+    } catch(err) {
+      resultEl.className = 'analysis-result';
+      resultEl.innerHTML = '<div class="empty-state">'
+        + '<p style="color:var(--danger)">Analysis failed: ' + esc(err.message) + '</p>'
+        + '<button class="btn btn-primary" onclick="runAnalysis(\'' + recordId + '\')">Try Again</button>'
+        + '</div>';
+      if (err.message !== 'Groq API key required') showToast(err.message, 'error');
+    }
+  }
+
+  function renderAnalysisResult(record) {
+    var resultEl = document.getElementById('analysisResult');
+    resultEl.className = 'analysis-result';
+    resultEl.innerHTML = '<div style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">'
+      + '<div>'
+      + '<div style="font-family:var(--font-display);font-size:22px;font-weight:600;">' + esc(getName(record)) + '</div>'
+      + '<div style="font-size:12px;color:var(--text-muted);">' + esc(record.channel) + ' &middot; ' + formatDate(getDate(record)) + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:7px;">' + sentimentBadge(getSentiment(record)) + ' ' + riskBadge(getChurn(record)) + '</div>'
+      + '</div>'
+      + '<div class="result-grid">'
+      + '<div class="result-field"><div class="result-field-label">Sentiment</div><div class="result-field-value" style="text-transform:capitalize;">' + esc(getSentiment(record)) + '</div></div>'
+      + '<div class="result-field"><div class="result-field-label">Issue Category</div><div class="result-field-value">' + esc(getIssue(record)) + '</div></div>'
+      + '<div class="result-field full"><div class="result-field-label">Summary</div><div class="result-field-value" style="font-weight:400;color:var(--text-secondary);line-height:1.6;">' + esc(getSummary(record)) + '</div></div>'
+      + '</div>'
+      + '<div class="result-action"><div class="result-action-label">Recommended Action</div><div class="result-action-text">' + esc(getAction(record)) + '</div></div>'
+      + '<div style="margin-top:20px;display:flex;gap:10px;">'
+      + '<button class="btn btn-primary" onclick="selectCustomerForAction(\'' + record.id + '\')">Generate Recovery Message &rarr;</button>'
+      + '<button class="btn btn-secondary" onclick="runAnalysis(\'' + record.id + '\')">Re-analyze</button>'
+      + '</div>';
+  }
+
+  /* ══════════════════════════════════════════════════════
+     ACTIONS
+  ══════════════════════════════════════════════════════ */
+  function renderActionsScreen() {
+    var list = document.getElementById('actionCustomerList');
+    if (!records.length) { list.innerHTML = '<div class="empty-state"><p>No customers yet.</p></div>'; return; }
+    list.innerHTML = records.map(function(r) {
+      var sel = selectedActionId === r.id;
+      return '<div class="customer-row" style="' + (sel ? 'border-color:var(--gold);background:var(--gold-dim);' : '') + '" onclick="selectActionCustomer(\'' + r.id + '\')">'
+        + '<div class="customer-avatar">' + initials(getName(r)) + '</div>'
+        + '<div class="customer-info">'
+        + '<div class="customer-name">' + esc(getName(r)) + '</div>'
+        + '<div class="customer-meta">' + esc(r.channel) + '</div>'
+        + '</div>'
+        + sentimentBadge(getSentiment(r))
+        + '<button class="delete-btn" onclick="deleteCustomer(\'' + r.id + '\',event)" title="Delete">&#10005;</button>'
+        + '</div>';
+    }).join('');
+    if (selectedActionId) renderActionPanel(records.find(function(r) { return r.id === selectedActionId; }));
+  }
+
+  function selectActionCustomer(id) { selectedActionId = id; renderActionsScreen(); }
+
+  function renderActionPanel(record) {
+    if (!record) return;
+    var panel = document.getElementById('actionPanel');
+    if (!record._lastActionTab) activeActionTab = getSentiment(record) === 'positive' ? 'referral' : 'recovery';
+
+    panel.innerHTML = '<div class="message-meta">'
+      + '<div>'
+      + '<div style="font-family:var(--font-display);font-size:24px;font-weight:600;">' + esc(getName(record)) + '</div>'
+      + '<div class="message-channel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>'
+      + esc(record.channel) + (record.phone ? ' &middot; ' + esc(record.phone) : '') + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:7px;">' + sentimentBadge(getSentiment(record)) + ' ' + riskBadge(getChurn(record)) + '</div>'
+      + '</div>'
+      + '<div class="action-tabs">'
+      + '<button class="action-tab ' + (activeActionTab === 'recovery' ? 'active' : '') + '" onclick="switchActionTab(\'recovery\')">Recovery Message</button>'
+      + '<button class="action-tab ' + (activeActionTab === 'referral' ? 'active' : '') + '" onclick="switchActionTab(\'referral\')">Referral Message</button>'
+      + '</div>'
+      + '<div class="message-box" id="messageBox">'
+      + (record['_' + activeActionTab + 'Message'] ? esc(record['_' + activeActionTab + 'Message']) : '<span style="color:var(--text-muted)">Click Generate to create an AI-crafted message&hellip;</span>')
+      + '</div>'
+      + '<div style="display:flex;gap:10px;">'
+      + '<button class="btn btn-primary" id="generateMsgBtn" onclick="generateMessage(\'' + record.id + '\',\'' + activeActionTab + '\')">'
+      + 'Generate ' + (activeActionTab === 'recovery' ? 'Recovery' : 'Referral') + ' Message'
+      + '</button>'
+      + '<button class="btn btn-secondary" onclick="copyMessage()">Copy to Clipboard</button>'
+      + '</div>';
+  }
+
+  function switchActionTab(tab) {
+    activeActionTab = tab;
+    var record = records.find(function(r) { return r.id === selectedActionId; });
+    if (record) { record._lastActionTab = tab; renderActionPanel(record); }
+  }
+
+  async function generateMessage(recordId, type) {
+    var record = records.find(function(r) { return r.id === recordId; });
+    if (!record) return;
+    var btn = document.getElementById('generateMsgBtn');
+    var box = document.getElementById('messageBox');
+    btn.disabled = true;
+    box.innerHTML = '<span style="color:var(--text-muted)">Generating&hellip;</span>';
+
+    try {
+      var isRecovery = type === 'recovery';
+      var prompt = isRecovery
+        ? 'Write a warm, sincere recovery message for a small business owner to send on ' + record.channel + ' to win back this customer. Personal, not corporate. 3-5 short paragraphs. Include a specific offer or next step. Do not use placeholders.\n\nCustomer: ' + getName(record) + '\nFeedback: ' + getNotes(record) + '\nIssue: ' + (getIssue(record) || 'unspecified') + '\nAction: ' + (getAction(record) || 'follow up promptly') + '\n\nReturn only the message text.'
+        : 'Write a warm referral-request message for a small business owner to send on ' + record.channel + ' to a happy customer. Natural, not salesy. 2-4 short paragraphs. No placeholders.\n\nCustomer: ' + getName(record) + '\nFeedback: ' + getNotes(record) + '\n\nReturn only the message text.';
+
+      var message = await callGemini(prompt);
+      record['_' + type + 'Message'] = message.trim();
+      await saveRecord(record);
+      box.textContent = message.trim();
+      showToast((type === 'recovery' ? 'Recovery' : 'Referral') + ' message generated.');
+    } catch(err) {
+      box.innerHTML = '<span style="color:var(--danger)">Failed: ' + esc(err.message) + '</span>';
+      if (err.message !== 'Groq API key required') showToast(err.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  function copyMessage() {
+    var box = document.getElementById('messageBox');
+    var text = box.textContent;
+    if (!text || text.includes('Click Generate')) { showToast('Generate a message first.', 'error'); return; }
+    navigator.clipboard.writeText(text).then(function() { showToast('Copied to clipboard.'); });
+  }
+
+  /* ══════════════════════════════════════════════════════
+     GEMINI KEY MODAL
+  ══════════════════════════════════════════════════════ */
+  document.getElementById('apiModalCancel').addEventListener('click', function() {
+    document.getElementById('apiModal').classList.remove('open');
+  });
+
+  document.getElementById('apiModalSave').addEventListener('click', function() {
+    var key = document.getElementById('apiKeyInput').value.trim();
+    if (key.length < 10) { showToast('Please enter a valid Gemini key.', 'error'); return; }
+    localStorage.setItem(GEMINI_API_STORE, key);
+    document.getElementById('apiModal').classList.remove('open');
+    showToast('Gemini key saved.');
+  });
+
+  document.getElementById('apiModal').addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+
+  /* ══════════════════════════════════════════════════════
+     CSV
+  ══════════════════════════════════════════════════════ */
+  document.getElementById('downloadTemplateBtn').addEventListener('click', function() {
+    var csv = 'Name,Email,Channel,Birthday\nAisha Okafor,aisha@example.com,WhatsApp,1990-03-14\n';
+    var blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 're10xion_template.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    showToast('Template downloaded.');
+  });
+
+  document.getElementById('importCsvBtn').addEventListener('click', function() { document.getElementById('csvFileInput').click(); });
+
+  document.getElementById('csvFileInput').addEventListener('change', async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = async function(ev) {
+      var lines = ev.target.result.split(/\r?\n/).filter(function(l) { return l.trim(); });
+      if (lines.length < 2) { showToast('CSV appears empty.', 'error'); return; }
+      var headers    = lines[0].split(',').map(function(h) { return h.trim().toLowerCase(); });
+      var nameIdx    = headers.indexOf('name');
+      var emailIdx   = headers.indexOf('email');
+      var channelIdx = headers.indexOf('channel');
+      var bdayIdx    = headers.indexOf('birthday');
+      var validCh    = ['WhatsApp','Instagram','Phone','In-Person','Email'];
+      var imported   = 0;
+      for (var i = 1; i < lines.length; i++) {
+        var cols     = lines[i].split(',').map(function(c) { return c.trim().replace(/^"|"$/g,''); });
+        var fullName = (nameIdx >= 0 ? cols[nameIdx] : cols[0]) || '';
+        if (!fullName) continue;
+        var rawCh   = (channelIdx >= 0 ? cols[channelIdx] : '') || 'WhatsApp';
+        var channel = validCh.find(function(ch) { return ch.toLowerCase() === rawCh.toLowerCase(); }) || 'WhatsApp';
+        var rec = {
+          id: uuid(), user_id: currentUser ? currentUser.id : 'local',
+          full_name: fullName, channel: channel,
+          email: emailIdx >= 0 ? (cols[emailIdx] || '') : '',
+          birthday: bdayIdx >= 0 ? (cols[bdayIdx] || '') : '',
+          interaction_date: new Date().toISOString().slice(0,10),
+          phone:'', notes:'', status:'interaction_logged',
+          created_at: new Date().toISOString(),
+          sentiment:'neutral', issue_category:null, churn_risk:null,
+          suggested_action:null, analysis_summary:null
+        };
+        records.unshift(rec);
+        await saveRecord(rec);
+        imported++;
+      }
+      if (imported > 0) { renderDashboard(); showToast(imported + ' customer' + (imported > 1 ? 's' : '') + ' imported.'); }
+      else showToast('No valid rows found.', 'error');
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  /* ══════════════════════════════════════════════════════
+     QUARTERLY REVIEWS
+  ══════════════════════════════════════════════════════ */
+  async function generateSurveyQuestions() {
+    var businessType = document.getElementById('businessType').value.trim();
+    if (!businessType) { showToast('Please enter your business type first.', 'error'); return; }
+    var btn = document.getElementById('generateSurveyBtn');
+    var resultEl = document.getElementById('surveyResult');
+    btn.disabled = true;
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = '<div class="card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:44px;"><div class="spinner"></div><p style="color:var(--text-muted);font-size:13px;">Crafting questions for ' + esc(businessType) + '&hellip;</p></div>';
+
+    try {
+      var prompt = 'You are a customer retention specialist. Generate exactly 3 impactful quarterly review survey questions for a ' + businessType + ' business. Questions should uncover satisfaction, friction points, and loyalty drivers.\n\nReturn ONLY a JSON object:\n{"questions":[{"number":1,"question":"...","rationale":"..."},{"number":2,"question":"...","rationale":"..."},{"number":3,"question":"...","rationale":"..."}]}\n\nReturn ONLY the JSON, no other text.';
+      var raw  = await callGemini(prompt);
+      var data = extractJSON(raw);
+      var questions = Array.isArray(data.questions) ? data.questions : [];
+
+      resultEl.innerHTML = '<div class="card">'
+        + '<div class="card-title" style="margin-bottom:20px;font-size:10px;">Retention Questions &mdash; <em style="color:var(--gold);font-style:italic;text-transform:none;font-family:var(--font-display);font-size:16px;">' + esc(businessType) + '</em></div>'
+        + questions.map(function(q, i) {
+          return '<div style="' + (i < questions.length-1 ? 'margin-bottom:14px;' : '') + 'padding:18px 20px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);">'
+            + '<div style="display:flex;align-items:flex-start;gap:14px;">'
+            + '<div style="width:30px;height:30px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--gold);">' + q.number + '</div>'
+            + '<div style="flex:1;">'
+            + '<div style="font-size:15px;font-weight:500;color:var(--text-primary);margin-bottom:6px;line-height:1.55;">' + esc(q.question) + '</div>'
+            + '<div style="font-size:12.5px;color:var(--text-muted);line-height:1.55;font-style:italic;">' + esc(q.rationale) + '</div>'
+            + '</div></div></div>';
+        }).join('')
+        + '<div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border);">'
+        + '<button class="btn btn-secondary" onclick="generateSurveyQuestions();" style="font-size:13px;">Regenerate</button>'
+        + '</div></div>';
+      showToast('Survey questions generated.');
+    } catch(err) {
+      resultEl.innerHTML = '<div class="card"><div class="empty-state"><p style="color:var(--danger);">' + esc(err.message) + '</p><button class="btn btn-ghost" onclick="generateSurveyQuestions()">Try Again</button></div></div>';
+      if (err.message !== 'Groq API key required') showToast(err.message, 'error');
+    } finally { btn.disabled = false; }
+  }
+
+  /* ══════════════════════════════════════════════════════
+     FOLLOW-UP NUDGES
+     Logic: any customer added 24h+ ago where nudge_sent is not true
+  ══════════════════════════════════════════════════════ */
+
+  function getNudgePending() {
+    var now = Date.now();
+    var twentyFourH = 24 * 60 * 60 * 1000;
+    return records.filter(function(r) {
+      var created = new Date(r.created_at || r.timeMarked || 0).getTime();
+      var age = now - created;
+      return age >= twentyFourH && !r.nudge_sent;
+    });
+  }
+
+  function updateNudgeBadge() {
+    var pending = getNudgePending();
+    var badge = document.getElementById('nudgeBadge');
+    if (!badge) return;
+    if (pending.length > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = pending.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function hoursAgo(record) {
+    var created = new Date(record.created_at || record.timeMarked || 0).getTime();
+    var h = Math.floor((Date.now() - created) / (1000 * 60 * 60));
+    if (h < 24) return h + 'h ago';
+    var d = Math.floor(h / 24);
+    return d + ' day' + (d > 1 ? 's' : '') + ' ago';
+  }
+
+  function renderNudgesScreen() {
+    var pending  = getNudgePending();
+    var resolved = records.filter(function(r) { return r.nudge_sent; });
+    var el = document.getElementById('nudgeList');
+
+    if (!records.length) {
+      el.innerHTML = '<div class="empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><p>No customers yet. Add customers to start tracking follow-ups.</p><button class="btn btn-primary" onclick="navigateTo(\'log\')">Add Customer &rarr;</button></div>';
+      return;
+    }
+
+    if (!pending.length && !resolved.length) {
+      el.innerHTML = '<div class="empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><p>All caught up. No pending follow-ups right now.</p><p style="font-size:12px;color:var(--text-muted);margin-top:-8px;">Customers show here 24 hours after they are added.</p></div>';
+      return;
+    }
+
+    var html = '';
+
+    if (pending.length) {
+      html += '<div style="font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;">Needs Follow-up (' + pending.length + ')</div>';
+      html += pending.map(function(r) {
+        var h = hoursAgo(r);
+        var isOverdue = (Date.now() - new Date(r.created_at || r.timeMarked || 0).getTime()) > 48 * 60 * 60 * 1000;
+        return '<div class="nudge-card" id="nudge-' + r.id + '">'
+          + '<div class="nudge-header">'
+          + '<div class="nudge-customer">'
+          + '<div class="customer-avatar">' + initials(getName(r)) + '</div>'
+          + '<div class="nudge-info">'
+          + '<div class="nudge-name">' + esc(getName(r)) + '</div>'
+          + '<div class="nudge-meta">' + esc(r.channel) + ' &middot; Added ' + h + '</div>'
+          + '</div>'
+          + '</div>'
+          + '<span class="nudge-time ' + (isOverdue ? 'overdue' : '') + '">' + (isOverdue ? 'Overdue' : 'Due now') + '</span>'
+          + '</div>'
+          + (getNotes(r) ? '<div class="nudge-notes">&ldquo;' + esc(getNotes(r).slice(0, 120)) + (getNotes(r).length > 120 ? '&hellip;' : '') + '&rdquo;</div>' : '')
+          + '<div class="nudge-message-box" id="nudge-msg-' + r.id + '"></div>'
+          + '<div class="nudge-actions">'
+          + '<button class="btn btn-primary" onclick="generateNudgeMessage(\'' + r.id + '\',\'thankyou\')" style="font-size:13px;">'
+          + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'
+          + 'Generate Thank-you + Feedback Request'
+          + '</button>'
+          + '<button class="btn btn-secondary" onclick="markNudgeSent(\'' + r.id + '\')" style="font-size:13px;">Mark as Sent</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    if (resolved.length) {
+      html += '<div style="font-size:10px;letter-spacing:0.13em;text-transform:uppercase;color:var(--text-muted);margin:28px 0 14px;">Completed Follow-ups (' + resolved.length + ')</div>';
+      html += resolved.slice(0, 5).map(function(r) {
+        return '<div class="nudge-card nudge-resolved">'
+          + '<div class="nudge-header">'
+          + '<div class="nudge-customer">'
+          + '<div class="customer-avatar">' + initials(getName(r)) + '</div>'
+          + '<div class="nudge-info">'
+          + '<div class="nudge-name">' + esc(getName(r)) + '</div>'
+          + '<div class="nudge-meta">' + esc(r.channel) + ' &middot; Follow-up sent</div>'
+          + '</div>'
+          + '</div>'
+          + '<span class="nudge-time done">&#10003; Done</span>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    el.innerHTML = html;
+  }
+
+  async function generateNudgeMessage(recordId, type) {
+    var record = records.find(function(r) { return r.id === recordId; });
+    if (!record) return;
+
+    var msgBox = document.getElementById('nudge-msg-' + recordId);
+    var card   = document.getElementById('nudge-' + recordId);
+    if (!msgBox) return;
+
+    msgBox.classList.add('visible');
+    msgBox.innerHTML = '<span style="color:var(--text-muted)">Generating follow-up message&hellip;</span>';
+
+    try {
+      var hasFeedback  = getNotes(record).trim().length > 0;
+      var sentiment    = getSentiment(record);
+
+      var prompt;
+
+      if (hasFeedback && sentiment === 'positive') {
+        /* Positive feedback — thank-you + referral nudge */
+        prompt = 'Write a warm, personal thank-you message for a small business owner to send on ' + record.channel + ' to a happy customer, 24 hours after their purchase. Include: (1) a genuine thank-you, (2) a short request for any feedback, and (3) a gentle referral ask with a small discount offer for anyone they refer. Keep it conversational, 3-4 short paragraphs. No placeholders.\n\nCustomer: ' + getName(record) + '\nFeedback: ' + getNotes(record) + '\n\nReturn only the message text.';
+      } else if (hasFeedback && sentiment === 'negative') {
+        /* Negative feedback — recovery focused follow-up */
+        prompt = 'Write a sincere follow-up recovery message for a small business owner to send on ' + record.channel + ' to an unhappy customer, 24 hours after their interaction. Acknowledge the issue specifically, apologize genuinely, and offer a concrete resolution. 3-4 short paragraphs. No placeholders.\n\nCustomer: ' + getName(record) + '\nIssue: ' + getIssue(record) + '\nFeedback: ' + getNotes(record) + '\nSuggested action: ' + getAction(record) + '\n\nReturn only the message text.';
+      } else {
+        /* No feedback yet or neutral — thank-you + feedback request */
+        prompt = 'Write a warm, short thank-you message for a small business owner to send on ' + record.channel + ' to a customer, 24 hours after their purchase. Include: (1) a genuine thank-you, and (2) a simple one-line ask for honest feedback. Keep it brief — 2-3 short paragraphs. Friendly and personal, not corporate. No placeholders.\n\nCustomer: ' + getName(record) + '\n\nReturn only the message text.';
+      }
+
+      var message = await callGemini(prompt);
+      msgBox.textContent = message.trim();
+
+      /* Add copy + mark sent buttons below message */
+      var actionsEl = card.querySelector('.nudge-actions');
+      if (actionsEl) {
+        actionsEl.innerHTML = '<button class="btn btn-primary" onclick="copyNudgeMessage(\'' + recordId + '\')" style="font-size:13px;">Copy to Clipboard</button>'
+          + '<button class="btn btn-secondary" onclick="markNudgeSent(\'' + recordId + '\')" style="font-size:13px;">Mark as Sent</button>'
+          + '<button class="btn btn-ghost" onclick="generateNudgeMessage(\'' + recordId + '\',\'thankyou\')" style="font-size:12px;">Regenerate</button>';
+      }
+
+      showToast('Follow-up message ready. Copy and send on ' + record.channel + '.');
+    } catch(err) {
+      msgBox.innerHTML = '<span style="color:var(--danger)">Failed: ' + esc(err.message) + '</span>';
+      if (err.message !== 'Groq API key required') showToast(err.message, 'error');
+    }
+  }
+
+  function copyNudgeMessage(recordId) {
+    var msgBox = document.getElementById('nudge-msg-' + recordId);
+    if (!msgBox) return;
+    var text = msgBox.textContent;
+    if (!text) { showToast('Generate a message first.', 'error'); return; }
+    navigator.clipboard.writeText(text).then(function() { showToast('Copied to clipboard.'); });
+  }
+
+  async function markNudgeSent(recordId) {
+    var record = records.find(function(r) { return r.id === recordId; });
+    if (!record) return;
+    record.nudge_sent = true;
+    await saveRecord(record);
+    showToast('Marked as sent. Great follow-up!');
+    updateNudgeBadge();
+    renderNudgesScreen();
+  }
+
+  </script>
+</body>
+</html>
