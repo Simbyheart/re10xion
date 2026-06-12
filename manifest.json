@@ -2,6 +2,7 @@
   "name": "Re10Xion",
   "short_name": "Re10Xion",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0c0b09",
   "theme_color": "#c9a55a",
