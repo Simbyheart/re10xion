@@ -10,6 +10,14 @@
 
   <!-- No external SDK needed — Supabase REST API called directly -->
 
+  <!-- PWA Manifest inline -->
+  <link rel="manifest" href="data:application/json,{%22name%22:%22Re10Xion%22,%22short_name%22:%22Re10Xion%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%230c0b09%22,%22theme_color%22:%22%23c9a55a%22,%22description%22:%22AI-powered%20customer%20retention%20for%20small%20businesses%22,%22icons%22:[{%22src%22:%22https://via.placeholder.com/192x192/0c0b09/c9a55a?text=R%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://via.placeholder.com/512x512/0c0b09/c9a55a?text=R%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}" />
+  <meta name="theme-color" content="#c9a55a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Re10Xion" />
+
   <style>
     :root {
       --bg-deep:       #0c0b09;
@@ -2182,6 +2190,13 @@
     renderNudgesScreen();
   }
 
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').catch(function() {});
+      });
+    }
   </script>
 </body>
 </html>
